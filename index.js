@@ -9,6 +9,10 @@ export default {
         });
       }
   
+      if (url.pathname === '/fetch-transcribe') {
+        return handleFetchAndTranscribe(request, env);
+      }
+
       if (request.method !== 'POST') {
         return new Response('Only POST method is supported', { status: 405 });
       }
@@ -426,4 +430,114 @@ export default {
 </html>
     `;
   }
+
+function serializeCookies(cookieObj) {
+  if (!cookieObj || typeof cookieObj !== 'object') {
+    return '';
+  }
+  return Object.entries(cookieObj)
+    .filter(([_, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('; ');
+}
+
+function buildFetchRequest(requestConfig) {
+  const { url, method = 'GET', headers: userHeaders = {}, cookie, data } = requestConfig;
+
+  if (!url) {
+    throw new Error('Missing required field: request.url');
+  }
+
+  const headers = { ...userHeaders };
+
+  const cookieStr = serializeCookies(cookie);
+  if (cookieStr) {
+    headers['Cookie'] = cookieStr;
+  }
+
+  const init = { method, headers };
+
+  const upperMethod = method.toUpperCase();
+  if ((upperMethod === 'POST' || upperMethod === 'PUT') && data !== undefined && data !== null) {
+    if (typeof data === 'object') {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(data);
+    } else {
+      init.body = String(data);
+    }
+  }
+
+  return fetch(url, init);
+}
+
+async function extractAudioBytes(response) {
+  if (!response.ok) {
+    throw new Error(`Fetch failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('audio') && !contentType.includes('octet-stream')) {
+    throw new Error(`Expected audio content but got content-type: ${contentType}`);
+  }
+
+  return response.arrayBuffer();
+}
+
+async function transcribeAudioBuffer(audioArrayBuffer, whisperOptions, env) {
+  const { task = 'transcribe', language, vad_filter = false, initial_prompt, prefix } = whisperOptions || {};
+
+  const inputs = {
+    audio: arrayBufferToBase64(audioArrayBuffer),
+    task,
+    vad_filter,
+  };
+
+  if (language) inputs.language = language;
+  if (initial_prompt) inputs.initial_prompt = initial_prompt;
+  if (prefix) inputs.prefix = prefix;
+
+  return env.AI.run("@cf/openai/whisper-large-v3-turbo", inputs);
+}
+
+async function handleFetchAndTranscribe(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (!body.request || !body.request.url) {
+    return Response.json({ error: 'Missing required field: request.url' }, { status: 400 });
+  }
+
+  const whisperOptions = body.whisper || {};
+
+  let fetchResponse;
+  try {
+    fetchResponse = await buildFetchRequest(body.request);
+  } catch (e) {
+    return Response.json({ error: 'Failed to fetch audio: ' + e.message }, { status: 502 });
+  }
+
+  let audioBuffer;
+  try {
+    audioBuffer = await extractAudioBytes(fetchResponse);
+  } catch (e) {
+    return Response.json({ error: e.message }, { status: 502 });
+  }
+
+  let aiResponse;
+  try {
+    aiResponse = await transcribeAudioBuffer(audioBuffer, whisperOptions, env);
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: 'Transcription failed: ' + e.message }, { status: 500 });
+  }
+
+  return Response.json({
+    text: aiResponse.text,
+    segments: aiResponse.segments,
+  });
+}
   

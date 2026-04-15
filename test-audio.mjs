@@ -12,8 +12,10 @@ async function extractAudioBytes(response) {
   }
 
   const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('audio') && !contentType.includes('octet-stream')) {
-    throw new Error(`Expected audio content but got content-type: ${contentType}`);
+  if (!contentType.includes('audio') &&
+      !contentType.includes('octet-stream') &&
+      !contentType.includes('video')) {
+    throw new Error(`Expected audio/video content but got content-type: ${contentType}`);
   }
 
   return response.arrayBuffer();

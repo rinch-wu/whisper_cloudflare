@@ -2,5 +2,8 @@ name = "whisper-cloudflare"
 compatibility_date = "2025-04-01"
 main = "index.js"
 
+[ai]
+binding = "AI"
+
 [observability]
 enabled = true

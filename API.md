@@ -1,6 +1,6 @@
 # Whisper Cloudflare API 文档
 
-**Base URL**: `https://whisper-cloudflare.rinch-wu.workers.dev`
+**Base URL**: `https://<your-worker>.<your-subdomain>.workers.dev`
 
 **模型**: `@cf/openai/whisper-large-v3-turbo`
 
@@ -41,17 +41,17 @@
 
 ```bash
 # 基本转写
-curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/raw" \
+curl -X POST "https://<your-worker>.workers.dev/raw" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @audio.mp3
 
 # 指定语言 + VAD 过滤 + 初始提示
-curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/raw?language=zh&vad_filter=true&initial_prompt=以下是普通话句子" \
+curl -X POST "https://<your-worker>.workers.dev/raw?language=zh&vad_filter=true&initial_prompt=以下是普通话句子" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @audio.mp3
 
 # 翻译为英文
-curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/raw?task=translate" \
+curl -X POST "https://<your-worker>.workers.dev/raw?task=translate" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @audio.mp3
 ```
@@ -105,7 +105,7 @@ curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/raw?task=translate
 ### 示例
 
 ```bash
-curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/srt?language=zh&vad_filter=true" \
+curl -X POST "https://<your-worker>.workers.dev/srt?language=zh&vad_filter=true" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @audio.mp3 \
   -o subtitles.srt
@@ -187,7 +187,7 @@ curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/srt?language=zh&va
 #### 基本用法（公开 URL）
 
 ```bash
-curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/fetch-transcribe" \
+curl -X POST "https://<your-worker>.workers.dev/fetch-transcribe" \
   -H "Content-Type: application/json" \
   -d '{
     "request": {
@@ -203,7 +203,7 @@ curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/fetch-transcribe" 
 #### 带 Cookie 和自定义 Header（Bilibili CDN）
 
 ```bash
-curl -X POST "https://whisper-cloudflare.rinch-wu.workers.dev/fetch-transcribe" \
+curl -X POST "https://<your-worker>.workers.dev/fetch-transcribe" \
   -H "Content-Type: application/json" \
   -d '{
     "request": {

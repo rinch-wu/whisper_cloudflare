@@ -2,7 +2,7 @@
 
 一个基于 Whisper 模型的在线音频转写工具，部署在 Cloudflare Workers 上。该工具可以将音频文件转换为文字，并支持生成 SRT 格式的字幕文件。
 
-实例：[https://whisper-cloudflare.rinch-wu.workers.dev/](https://whisper-cloudflare.rinch-wu.workers.dev/)
+实例：部署后访问你的 Worker URL
 
 ![index](https://github.com/user-attachments/assets/8818c6e9-8e4e-4cec-802e-16513de9f91e)
 

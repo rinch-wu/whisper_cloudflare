@@ -1,5 +1,3 @@
-import { extractAudioBytes } from './lib/audio.mjs';
-
 export default {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -472,7 +470,18 @@ function buildFetchRequest(requestConfig) {
   return fetch(url, init);
 }
 
-// extractAudioBytes imported from ./lib/audio.mjs
+async function extractAudioBytes(response) {
+  if (!response.ok) {
+    throw new Error(`Fetch failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('audio') && !contentType.includes('octet-stream')) {
+    throw new Error(`Expected audio content but got content-type: ${contentType}`);
+  }
+
+  return response.arrayBuffer();
+}
 
 async function transcribeAudioBuffer(audioArrayBuffer, whisperOptions, env) {
   const { task = 'transcribe', language, vad_filter = false, initial_prompt, prefix } = whisperOptions || {};

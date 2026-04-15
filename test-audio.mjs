@@ -1,9 +1,25 @@
 /**
- * Standalone test for extractAudioBytes module.
+ * Standalone test for extractAudioBytes function.
+ * Copies the function from index.js for isolated testing.
  * Run: node test-audio.mjs
  */
 
-import { extractAudioBytes } from './lib/audio.mjs';
+// ── Copied from index.js ──────────────────────────────────────────────
+
+async function extractAudioBytes(response) {
+  if (!response.ok) {
+    throw new Error(`Fetch failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('audio') && !contentType.includes('octet-stream')) {
+    throw new Error(`Expected audio content but got content-type: ${contentType}`);
+  }
+
+  return response.arrayBuffer();
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────
 
 let passed = 0;
 let failed = 0;
@@ -18,7 +34,7 @@ function assert(condition, label) {
   }
 }
 
-console.log('\n📦 extractAudioBytes (lib/audio.mjs)\n');
+console.log('\n📦 extractAudioBytes\n');
 
 // Test 1: 404 response → throws
 try {
@@ -40,7 +56,7 @@ try {
     `non-audio → correct error (${e.message})`);
 }
 
-// Test 3: application/octet-stream → accepted (generic binary)
+// Test 3: application/octet-stream → accepted
 try {
   const res = await fetch('https://httpbin.org/bytes/1024');
   const buf = await extractAudioBytes(res);
@@ -51,7 +67,7 @@ try {
   passed++;
 }
 
-// Test 4: valid audio URL → returns ArrayBuffer with data
+// Test 4: valid audio URL → returns ArrayBuffer
 try {
   const res = await fetch('https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav');
   const buf = await extractAudioBytes(res);
@@ -62,7 +78,7 @@ try {
   passed++;
 }
 
-// Test 5: empty response body with audio content-type → returns empty ArrayBuffer
+// Test 5: empty body with audio content-type → empty ArrayBuffer
 try {
   const emptyRes = new Response(null, {
     status: 200,
